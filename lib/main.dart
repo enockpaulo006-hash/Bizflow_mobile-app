@@ -9,6 +9,7 @@ import 'screen/products_screen.dart';
 import 'screen/purchases_screen.dart';
 import 'screen/sales_screen.dart';
 import 'screen/expenses_screen.dart';
+import 'screen/reports_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -247,11 +248,19 @@ class BizFlowDashboard extends StatelessWidget {
                       );
                     },
                   ),
-                const ModuleCard(
-                  title: 'Reports',
-                  subtitle: 'Review performance',
-                  icon: Icons.bar_chart,
-                ),
+                    ModuleCard(
+                      title: 'Reports',
+                      subtitle: 'Review performance',
+                      icon: Icons.bar_chart,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ReportsScreen(),
+                          ),
+                        );
+                      },
+                    ),
                 const ModuleCard(
                   title: 'Users',
                   subtitle: 'Manage access',
