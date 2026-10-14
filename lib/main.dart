@@ -6,6 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'screen/login_screen.dart';
 import 'screen/products_screen.dart';
+import 'screen/purchases_screen.dart';
+import 'screen/sales_screen.dart';
+import 'screen/expenses_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -201,21 +204,49 @@ class BizFlowDashboard extends StatelessWidget {
                     );
                   },
                 ),
-                const ModuleCard(
+                ModuleCard(
                   title: 'Purchases',
                   subtitle: 'Record purchases',
                   icon: Icons.shopping_cart_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PurchasesScreen(),
+                      ),
+                    );
+                  },
                 ),
-                const ModuleCard(
+                ModuleCard(
+                  title: 'Sales',
+                  subtitle: 'Record transactions',
+                  icon: Icons.point_of_sale,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SalesScreen(),
+                      ),
+                    );
+                  },
+                ),const ModuleCard(
                   title: 'Sales',
                   subtitle: 'Record transactions',
                   icon: Icons.point_of_sale,
                 ),
-                const ModuleCard(
-                  title: 'Expenses',
-                  subtitle: 'Track business costs',
-                  icon: Icons.receipt_long,
-                ),
+                  ModuleCard(
+                    title: 'Expenses',
+                    subtitle: 'Track business costs',
+                    icon: Icons.receipt_long,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ExpensesScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 const ModuleCard(
                   title: 'Reports',
                   subtitle: 'Review performance',
