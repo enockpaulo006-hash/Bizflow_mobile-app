@@ -1,8 +1,12 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+
 import 'package:flutter/material.dart';
-import 'screen/login_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'firebase_options.dart';
+import 'screen/login_screen.dart';
+import 'screen/products_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -12,6 +16,7 @@ void main() async {
 
   runApp(const BizFlowApp());
 }
+
 class BizFlowApp extends StatelessWidget {
   const BizFlowApp({super.key});
 
@@ -36,21 +41,23 @@ class BizFlowApp extends StatelessWidget {
         ),
       ),
       home: StreamBuilder<User?>(
-  stream: FirebaseAuth.instance.authStateChanges(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
 
-    if (snapshot.hasData) {
-      return const BizFlowDashboard();
-    }
+          if (snapshot.hasData) {
+            return const BizFlowDashboard();
+          }
 
-    return const LoginScreen();
-  },
-),
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }
@@ -60,12 +67,17 @@ class BizFlowDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const green = Color(0xFF147D55);
+
     return Scaffold(
       appBar: AppBar(
         title: const Row(
           children: [
-            Icon(Icons.account_balance_wallet,
-                color: Color(0xFF147D55), size: 30),
+            Icon(
+              Icons.account_balance_wallet,
+              color: green,
+              size: 30,
+            ),
             SizedBox(width: 10),
             Text(
               'BizFlow',
@@ -80,19 +92,19 @@ class BizFlowDashboard extends StatelessWidget {
             icon: const Icon(Icons.notifications_none),
           ),
           const Padding(
-            padding: EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(right: 8),
             child: CircleAvatar(
               backgroundColor: Color(0xFFDCECE4),
-              child: Icon(Icons.person, color: Color(0xFF147D55)),
+              child: Icon(Icons.person, color: green),
             ),
           ),
-                  IconButton(
-          tooltip: 'Sign out',
-          onPressed: () async {
-            await FirebaseAuth.instance.signOut();
-          },
-          icon: const Icon(Icons.logout),
-        ),
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+            icon: const Icon(Icons.logout),
+          ),
         ],
       ),
       body: SafeArea(
@@ -101,7 +113,10 @@ class BizFlowDashboard extends StatelessWidget {
           children: [
             const Text(
               'Business overview',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -110,7 +125,7 @@ class BizFlowDashboard extends StatelessWidget {
             ),
             const SizedBox(height: 22),
 
-            // Summary cards are placeholders until real data is connected.
+            // Summary cards are placeholders until connected to real data.
             const Row(
               children: [
                 Expanded(
@@ -158,9 +173,13 @@ class BizFlowDashboard extends StatelessWidget {
 
             const Text(
               'Business modules',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 14),
+
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -168,33 +187,41 @@ class BizFlowDashboard extends StatelessWidget {
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
               childAspectRatio: 1.45,
-              children: const [
+              children: [
                 ModuleCard(
                   title: 'Products',
                   subtitle: 'Manage inventory',
                   icon: Icons.inventory_2_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductsScreen(),
+                      ),
+                    );
+                  },
                 ),
-                ModuleCard(
+                const ModuleCard(
                   title: 'Purchases',
                   subtitle: 'Record purchases',
                   icon: Icons.shopping_cart_outlined,
                 ),
-                ModuleCard(
+                const ModuleCard(
                   title: 'Sales',
                   subtitle: 'Record transactions',
                   icon: Icons.point_of_sale,
                 ),
-                ModuleCard(
+                const ModuleCard(
                   title: 'Expenses',
                   subtitle: 'Track business costs',
                   icon: Icons.receipt_long,
                 ),
-                ModuleCard(
+                const ModuleCard(
                   title: 'Reports',
                   subtitle: 'Review performance',
                   icon: Icons.bar_chart,
                 ),
-                ModuleCard(
+                const ModuleCard(
                   title: 'Users',
                   subtitle: 'Manage access',
                   icon: Icons.people_outline,
@@ -202,22 +229,28 @@ class BizFlowDashboard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
+
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5EAE7)),
+                border: Border.all(
+                  color: const Color(0xFFE5EAE7),
+                ),
               ),
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, color: Color(0xFF147D55)),
+                  Icon(
+                    Icons.info_outline,
+                    color: green,
+                  ),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Setup in progress. Dashboard figures will appear '
-                      'after the business data and Firebase are connected.',
+                      'after business data is connected.',
                     ),
                   ),
                 ],
@@ -273,7 +306,9 @@ class SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5EAE7)),
+        border: Border.all(
+          color: const Color(0xFFE5EAE7),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +325,10 @@ class SummaryCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -302,41 +340,59 @@ class ModuleCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const ModuleCard({
     super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    const green = Color(0xFF147D55);
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5EAE7)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: const Color(0xFF147D55), size: 27),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFE5EAE7),
+            ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: green, size: 27),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
