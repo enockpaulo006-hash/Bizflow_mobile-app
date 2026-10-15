@@ -18,8 +18,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   String _searchText = '';
 
-  DateTime _selectedDate = DateTime.now();
-
   String _formatDate(DateTime date) {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
@@ -75,7 +73,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             textCapitalization: TextCapitalization.words,
                             decoration: const InputDecoration(
                               labelText: 'Expense category *',
-                              hintText: 'e.g. Transport, Rent, Electricity',
+                              hintText:
+                                  'e.g. Transport, Rent, Electricity',
                               prefixIcon: Icon(Icons.category_outlined),
                               border: OutlineInputBorder(),
                             ),
@@ -89,7 +88,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           const SizedBox(height: 14),
                           TextFormField(
                             controller: descriptionController,
-                            textCapitalization: TextCapitalization.sentences,
+                            textCapitalization:
+                                TextCapitalization.sentences,
                             maxLines: 2,
                             decoration: const InputDecoration(
                               labelText: 'Description',
@@ -417,7 +417,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             88,
                           ),
                           itemCount: visibleRecords.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final data = visibleRecords[index].data();
@@ -445,7 +445,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                 ),
                               ),
                               child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
+                                contentPadding:
+                                    const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 8,
                                 ),
