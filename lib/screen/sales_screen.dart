@@ -145,8 +145,7 @@ class _SalesScreenState extends State<SalesScreen> {
     for (var i = 0; i < batches.length && unitsLeft > 0; i++) {
       if (remaining[i] <= 0) continue;
 
-      final used =
-          remaining[i] < unitsLeft ? remaining[i] : unitsLeft;
+      final used = remaining[i] < unitsLeft ? remaining[i] : unitsLeft;
 
       final data = batches[i].data();
       final price = data['buying_price'];
@@ -200,8 +199,7 @@ class _SalesScreenState extends State<SalesScreen> {
     final oldProductId = oldData['product_id']?.toString();
 
     final activeProducts = productDocs.where((doc) {
-      return doc.data()['is_active'] != false ||
-          doc.id == oldProductId;
+      return doc.data()['is_active'] != false || doc.id == oldProductId;
     }).toList();
 
     if (activeProducts.isEmpty) {
@@ -259,7 +257,7 @@ class _SalesScreenState extends State<SalesScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           DropdownButtonFormField<String>(
-                            value: selectedProductId,
+                            initialValue: selectedProductId,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Product *',
@@ -381,7 +379,7 @@ class _SalesScreenState extends State<SalesScreen> {
                           ),
                           const SizedBox(height: 8),
                           Builder(
-                            builder: (_) {
+                            builder: (context) {
                               final quantity = int.tryParse(
                                     quantityController.text.trim(),
                                   ) ??
@@ -760,7 +758,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
                           itemCount: visibleRecords.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final doc = visibleRecords[index];
