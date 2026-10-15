@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'screen/users_screen.dart';
 
 import 'firebase_options.dart';
 import 'screen/login_screen.dart';
@@ -10,6 +11,7 @@ import 'screen/purchases_screen.dart';
 import 'screen/sales_screen.dart';
 import 'screen/expenses_screen.dart';
 import 'screen/reports_screen.dart';
+import 'screen/analysis_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -261,11 +263,32 @@ class BizFlowDashboard extends StatelessWidget {
                         );
                       },
                     ),
-                const ModuleCard(
-                  title: 'Users',
-                  subtitle: 'Manage access',
-                  icon: Icons.people_outline,
-                ),
+                      ModuleCard(
+                      title: 'Analysis',
+                      subtitle: 'Business performance',
+                      icon: Icons.analytics_outlined,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AnalysisScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                        ModuleCard(
+                          title: 'Users',
+                          subtitle: 'Manage user accounts',
+                          icon: Icons.people_outline,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UsersScreen(),
+                              ),
+                            );
+                          },
+                        ),
               ],
             ),
             const SizedBox(height: 24),
