@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'screen/capital_monitor_screen.dart';
 
 import 'firebase_options.dart';
 import 'screen/login_screen.dart';
@@ -330,6 +331,15 @@ class _BizFlowDashboardState extends State<BizFlowDashboard> {
                 subtitle: 'Monitor inventory',
                 icon: Icons.notifications_active_outlined,
                 onTap: () => _onDestinationSelected(1),
+              ),
+              ModuleCard(
+                title: 'Capital Monitor',
+                subtitle: 'Track capital flow',
+                icon: Icons.account_balance_outlined,
+                onTap: () => _openScreen(
+                  context,
+                  const CapitalMonitorScreen(),
+                ),
               ),
               ModuleCard(
                 title: 'Users',
