@@ -43,9 +43,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   Future<int> _quantitySold(String productId) async {
-    final result = await _sales
-        .where('product_id', isEqualTo: productId)
-        .get();
+    final result =
+        await _sales.where('product_id', isEqualTo: productId).get();
 
     return result.docs.fold<int>(0, (total, doc) {
       final quantity = doc.data()['quantity'];
@@ -71,17 +70,14 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       final result = await _products.get();
 
       availableProducts = result.docs.where((doc) {
-        return doc.data()['is_active'] != false ||
-            doc.id == oldProductId;
+        return doc.data()['is_active'] != false || doc.id == oldProductId;
       }).toList();
     } on FirebaseException catch (error) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            error.message ?? 'Could not load products.',
-          ),
+          content: Text(error.message ?? 'Could not load products.'),
         ),
       );
       return;
@@ -113,9 +109,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       text: existingData['buying_price']?.toString() ?? '',
     );
 
-    DateTime selectedDate = _purchaseDate(
-      existingData['purchase_date'],
-    );
+    DateTime selectedDate = _purchaseDate(existingData['purchase_date']);
 
     try {
       await showDialog<void>(
@@ -125,9 +119,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
             builder: (dialogContext, setDialogState) {
               return AlertDialog(
                 title: Text(
-                  purchase == null
-                      ? 'Record purchase'
-                      : 'Update purchase',
+                  purchase == null ? 'Record purchase' : 'Update purchase',
                 ),
                 content: SizedBox(
                   width: 420,
@@ -138,7 +130,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           DropdownButtonFormField<String>(
-                            value: selectedProductId,
+                            initialValue: selectedProductId,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Product *',
@@ -350,10 +342,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           'quantity': quantity,
                           'buying_price': buyingPrice,
                           'total_cost': quantity * buyingPrice,
-                          'purchase_date':
-                              Timestamp.fromDate(selectedDate),
-                          'user_id':
-                              FirebaseAuth.instance.currentUser?.uid,
+                          'purchase_date': Timestamp.fromDate(selectedDate),
+                          'user_id': FirebaseAuth.instance.currentUser?.uid,
                           'updated_at': FieldValue.serverTimestamp(),
                         };
 
@@ -395,9 +385,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
                         ScaffoldMessenger.of(dialogContext).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              'Could not save purchase: $error',
-                            ),
+                            content: Text('Could not save purchase: $error'),
                           ),
                         );
                       }
@@ -519,8 +507,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final records =
-                snapshot.data?.docs.toList() ?? [];
+            final records = snapshot.data?.docs.toList() ?? [];
 
             records.sort((a, b) {
               return _purchaseDate(b.data()['purchase_date']).compareTo(
@@ -635,7 +622,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
                           itemCount: visibleRecords.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final doc = visibleRecords[index];
@@ -655,10 +642,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                     'Unnamed product';
                             final category =
                                 data['category']?.toString() ?? 'Other';
-                            final date =
-                                _formatDate(_purchaseDate(
-                              data['purchase_date'],
-                            ));
+                            final date = _formatDate(
+                              _purchaseDate(data['purchase_date']),
+                            );
 
                             return Card(
                               elevation: 0,
