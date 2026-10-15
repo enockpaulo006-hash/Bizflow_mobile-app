@@ -104,8 +104,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (!_isInPeriod(date)) continue;
 
       final quantityValue = data['quantity'];
-      final quantity =
-          quantityValue is num ? quantityValue.toInt() : 0;
+      final quantity = quantityValue is num ? quantityValue.toInt() : 0;
 
       final sellingPriceValue = data['selling_price'];
       final sellingPrice =
@@ -161,8 +160,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (!_isInPeriod(_readDate(data['expense_date']))) continue;
 
       final amountValue = data['amount'];
-      final amount =
-          amountValue is num ? amountValue.toDouble() : 0.0;
+      final amount = amountValue is num ? amountValue.toDouble() : 0.0;
 
       totalExpenses += amount;
 
@@ -171,8 +169,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ? data['category'].toString().trim()
               : 'Other';
 
-      expenseResults[category] =
-          (expenseResults[category] ?? 0) + amount;
+      expenseResults[category] = (expenseResults[category] ?? 0) + amount;
     }
 
     final products = productResults.values.toList()
@@ -224,8 +221,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               );
             }
 
-            if (salesSnapshot.connectionState ==
-                ConnectionState.waiting) {
+            if (salesSnapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
               );
@@ -263,15 +259,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 final expenses = report['expenses'] as double;
                 final netProfit = report['netProfit'] as double;
                 final unitsSold = report['unitsSold'] as int;
-                final transactionCount =
-                    report['transactionCount'] as int;
+                final transactionCount = report['transactionCount'] as int;
 
                 final products =
                     report['products'] as List<Map<String, dynamic>>;
 
                 final expenseBreakdown =
-                    report['expenseBreakdown'] as List<
-                        MapEntry<String, double>>;
+                    report['expenseBreakdown'] as List<MapEntry<String, double>>;
 
                 return ListView(
                   padding: const EdgeInsets.all(16),
@@ -292,7 +286,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
                     // Report period selection.
                     DropdownButtonFormField<String>(
-                      value: _period,
+                      initialValue: _period,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Report period',
@@ -415,8 +409,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         final name = product['name'] as String;
                         final category = product['category'] as String;
                         final quantity = product['quantity'] as int;
-                        final productRevenue =
-                            product['revenue'] as double;
+                        final productRevenue = product['revenue'] as double;
                         final profit = product['profit'] as double;
 
                         return Card(
@@ -432,8 +425,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(14),
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   name,
