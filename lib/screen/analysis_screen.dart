@@ -96,15 +96,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     for (final doc in sales) {
       final data = doc.data();
+
       if (!_isInPeriod(_readDate(data['sale_date']))) continue;
 
       final quantityValue = data['quantity'];
-      final quantity =
-          quantityValue is num ? quantityValue.toInt() : 0;
+      final quantity = quantityValue is num ? quantityValue.toInt() : 0;
 
       final sellingPriceValue = data['selling_price'];
-      final sellingPrice =
-          sellingPriceValue is num ? sellingPriceValue.toDouble() : 0.0;
+      final sellingPrice = sellingPriceValue is num
+          ? sellingPriceValue.toDouble()
+          : 0.0;
 
       final revenueValue = data['revenue'];
       final saleRevenue = revenueValue is num
@@ -146,10 +147,13 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     for (final doc in expenses) {
       final data = doc.data();
+
       if (!_isInPeriod(_readDate(data['expense_date']))) continue;
 
       final amount = data['amount'];
-      if (amount is num) expenseTotal += amount.toDouble();
+      if (amount is num) {
+        expenseTotal += amount.toDouble();
+      }
     }
 
     final productStock = <String, Map<String, dynamic>>{};
@@ -171,9 +175,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     for (final doc in purchases) {
       final data = doc.data();
       final id = data['product_id']?.toString();
+
       if (id == null || !productStock.containsKey(id)) continue;
 
       final quantity = data['quantity'];
+
       if (quantity is num) {
         final item = productStock[id]!;
         item['purchased'] =
@@ -184,9 +190,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     for (final doc in sales) {
       final data = doc.data();
       final id = data['product_id']?.toString();
+
       if (id == null || !productStock.containsKey(id)) continue;
 
       final quantity = data['quantity'];
+
       if (quantity is num) {
         final item = productStock[id]!;
         item['sold'] = (item['sold'] as int) + quantity.toInt();
@@ -196,12 +204,14 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final stockItems = productStock.values.map((item) {
       final purchased = item['purchased'] as int;
       final sold = item['sold'] as int;
-      final stock = (purchased - sold).clamp(0, 1 << 30) as int;
+
+      final stock = (purchased - sold).clamp(0, 1 << 30);
       final threshold = item['reorder_percentage'] as double;
       final stockPercentage =
           purchased > 0 ? stock / purchased * 100 : 0.0;
 
       String status;
+
       if (stock <= 0) {
         status = 'OUT OF STOCK';
       } else if (purchased > 0 && stockPercentage <= threshold) {
@@ -218,19 +228,19 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       };
     }).toList();
 
-    stockItems.sort((a, b) {
-      final rank = (item) {
-        switch (item['status']) {
-          case 'OUT OF STOCK':
-            return 0;
-          case 'LOW STOCK':
-            return 1;
-          default:
-            return 2;
-        }
-      };
+    int stockRank(Map<String, dynamic> item) {
+      switch (item['status']) {
+        case 'OUT OF STOCK':
+          return 0;
+        case 'LOW STOCK':
+          return 1;
+        default:
+          return 2;
+      }
+    }
 
-      final comparison = rank(a).compareTo(rank(b));
+    stockItems.sort((a, b) {
+      final comparison = stockRank(a).compareTo(stockRank(b));
       if (comparison != 0) return comparison;
 
       return (a['name'] as String).compareTo(b['name'] as String);
@@ -272,6 +282,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             if (productsSnapshot.hasError) {
               return const _AnalysisError();
             }
+
             if (productsSnapshot.connectionState ==
                 ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -283,6 +294,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 if (purchasesSnapshot.hasError) {
                   return const _AnalysisError();
                 }
+
                 if (purchasesSnapshot.connectionState ==
                     ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -294,6 +306,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                     if (salesSnapshot.hasError) {
                       return const _AnalysisError();
                     }
+
                     if (salesSnapshot.connectionState ==
                         ConnectionState.waiting) {
                       return const Center(
@@ -308,6 +321,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                         if (expensesSnapshot.hasError) {
                           return const _AnalysisError();
                         }
+
                         if (expensesSnapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const Center(
@@ -323,8 +337,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                         );
 
                         final revenue = result['revenue'] as double;
-                        final grossProfit =
-                            result['grossProfit'] as double;
+                        final grossProfit = result['grossProfit'] as double;
                         final expenses = result['expenses'] as double;
                         final netProfit = result['netProfit'] as double;
                         final unitsSold = result['unitsSold'] as int;
@@ -335,9 +348,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                             result['stock'] as List<Map<String, dynamic>>;
 
                         final urgentCount = stockItems
-                            .where((item) =>
-                                item['status'] == 'OUT OF STOCK' ||
-                                item['status'] == 'LOW STOCK')
+                            .where(
+                              (item) =>
+                                  item['status'] == 'OUT OF STOCK' ||
+                                  item['status'] == 'LOW STOCK',
+                            )
                             .length;
 
                         return ListView(
@@ -357,7 +372,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                             ),
                             const SizedBox(height: 18),
                             DropdownButtonFormField<String>(
-                              value: _period,
+                              initialValue: _period,
                               isExpanded: true,
                               decoration: const InputDecoration(
                                 labelText: 'Analysis period',
@@ -370,6 +385,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                                 'Specific Date',
                                 'Last 7 Days',
                                 'Last 30 Days',
+                                'This Month',
                                 'All Time',
                               ].map((period) {
                                 return DropdownMenuItem<String>(
@@ -379,7 +395,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                               }).toList(),
                               onChanged: (value) {
                                 if (value == null) return;
+
                                 setState(() => _period = value);
+
                                 if (value == 'Specific Date') {
                                   _chooseDate();
                                 }
