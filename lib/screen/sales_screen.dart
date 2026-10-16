@@ -526,9 +526,9 @@ class _SalesScreenState extends State<SalesScreen> {
                           );
                         }
                       } on FirebaseException catch (error) {
-                        if (!dialogContext.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               error.message ?? 'Could not save this sale.',
@@ -536,9 +536,9 @@ class _SalesScreenState extends State<SalesScreen> {
                           ),
                         );
                       } catch (error) {
-                        if (!dialogContext.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Could not save sale: $error'),
                           ),
@@ -554,6 +554,9 @@ class _SalesScreenState extends State<SalesScreen> {
         },
       );
     } finally {
+      // Let the dialog route finish its closing animation before disposing
+      // controllers still referenced by its TextFormFields.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       quantityController.dispose();
       priceController.dispose();
     }
