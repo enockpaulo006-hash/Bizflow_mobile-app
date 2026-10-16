@@ -195,9 +195,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           );
                         }
                       } on FirebaseException catch (error) {
-                        if (!dialogContext.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               error.message ?? 'Could not save the expense.',
@@ -205,9 +205,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           ),
                         );
                       } catch (_) {
-                        if (!dialogContext.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
                               'Could not save expense. Please try again.',
@@ -225,6 +225,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         },
       );
     } finally {
+      // Let the dialog route finish its closing animation before disposing
+      // controllers still referenced by its TextFormFields.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       categoryController.dispose();
       descriptionController.dispose();
       amountController.dispose();
