@@ -371,9 +371,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           );
                         }
                       } on FirebaseException catch (error) {
-                        if (!dialogContext.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
                               error.message ?? 'Could not save the purchase.',
@@ -381,9 +381,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           ),
                         );
                       } catch (error) {
-                        if (!dialogContext.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Could not save purchase: $error'),
                           ),
@@ -399,6 +399,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
         },
       );
     } finally {
+      // Let the dialog route finish its closing animation before disposing
+      // controllers still referenced by its TextFormFields.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       quantityController.dispose();
       priceController.dispose();
     }
