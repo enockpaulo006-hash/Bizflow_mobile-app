@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screen/capital_monitor_screen.dart';
 
 import 'firebase_options.dart';
@@ -209,50 +210,8 @@ class _BizFlowDashboardState extends State<BizFlowDashboard> {
           ),
           const SizedBox(height: 22),
 
-          const Row(
-            children: [
-              Expanded(
-                child: SummaryCard(
-                  title: 'Sales',
-                  value: '—',
-                  icon: Icons.point_of_sale,
-                  color: green,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: SummaryCard(
-                  title: 'Expenses',
-                  value: '—',
-                  icon: Icons.receipt_long,
-                  color: Color(0xFFD97706),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          _buildOverviewCards(),
 
-          const Row(
-            children: [
-              Expanded(
-                child: SummaryCard(
-                  title: 'Products',
-                  value: '—',
-                  icon: Icons.inventory_2_outlined,
-                  color: Color(0xFF2563EB),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: SummaryCard(
-                  title: 'Low stock',
-                  value: '—',
-                  icon: Icons.warning_amber_rounded,
-                  color: Color(0xFFDC2626),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 28),
 
           const Text(
@@ -366,12 +325,12 @@ class _BizFlowDashboardState extends State<BizFlowDashboard> {
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, color: green),
+                Icon(Icons.sync, color: green),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Dashboard figures are placeholders until '
-                    'they are connected to real business data.',
+                    'Overview figures update automatically from your '
+                    'Firestore sales, expenses, and inventory records.',
                   ),
                 ),
               ],
@@ -380,6 +339,217 @@ class _BizFlowDashboardState extends State<BizFlowDashboard> {
         ],
       ),
     );
+  }
+
+  Widget _buildOverviewCards() {
+    final firestore = FirebaseFirestore.instance;
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: firestore.collection('sales').snapshots(),
+      builder: (context, salesSnapshot) {
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: firestore.collection('expenses').snapshots(),
+          builder: (context, expensesSnapshot) {
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: firestore.collection('products').snapshots(),
+              builder: (context, productsSnapshot) {
+                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: firestore.collection('purchases').snapshots(),
+                  builder: (context, purchasesSnapshot) {
+                    final hasError = salesSnapshot.hasError ||
+                        expensesSnapshot.hasError ||
+                        productsSnapshot.hasError ||
+                        purchasesSnapshot.hasError;
+
+                    final isLoading =
+                        salesSnapshot.connectionState == ConnectionState.waiting ||
+                        expensesSnapshot.connectionState == ConnectionState.waiting ||
+                        productsSnapshot.connectionState == ConnectionState.waiting ||
+                        purchasesSnapshot.connectionState == ConnectionState.waiting;
+
+                    String salesValue = 'Loading...';
+                    String expensesValue = 'Loading...';
+                    String productsValue = 'Loading...';
+                    String lowStockValue = 'Loading...';
+
+                    if (hasError) {
+                      salesValue = 'Unavailable';
+                      expensesValue = 'Unavailable';
+                      productsValue = 'Unavailable';
+                      lowStockValue = 'Unavailable';
+                    } else if (!isLoading &&
+                        salesSnapshot.data != null &&
+                        expensesSnapshot.data != null &&
+                        productsSnapshot.data != null &&
+                        purchasesSnapshot.data != null) {
+                      // Sales and expenses are daily totals. Historical records
+                      // remain in Firestore for reports and analysis.
+                      final today = DateTime.now();
+                      double salesTotal = 0;
+                      for (final doc in salesSnapshot.data!.docs) {
+                        final data = doc.data();
+                        if (!_overviewIsToday(data['sale_date'], today)) {
+                          continue;
+                        }
+
+                        final revenue = data['revenue'];
+                        if (revenue is num) {
+                          salesTotal += revenue.toDouble();
+                        } else {
+                          final quantity = _overviewNumber(data['quantity']);
+                          final price = _overviewNumber(data['selling_price']);
+                          salesTotal += quantity * price;
+                        }
+                      }
+
+                      double expensesTotal = 0;
+                      for (final doc in expensesSnapshot.data!.docs) {
+                        final data = doc.data();
+                        if (!_overviewIsToday(data['expense_date'], today)) {
+                          continue;
+                        }
+                        expensesTotal += _overviewNumber(data['amount']);
+                      }
+
+                      final activeProducts = productsSnapshot.data!.docs
+                          .where((doc) => doc.data()['is_active'] != false)
+                          .toList();
+
+                      final purchased = <String, double>{};
+                      final sold = <String, double>{};
+
+                      for (final doc in purchasesSnapshot.data!.docs) {
+                        final data = doc.data();
+                        final productId = data['product_id']?.toString();
+                        if (productId == null || productId.isEmpty) continue;
+                        purchased[productId] =
+                            (purchased[productId] ?? 0) +
+                            _overviewNumber(data['quantity']);
+                      }
+
+                      for (final doc in salesSnapshot.data!.docs) {
+                        final data = doc.data();
+                        final productId = data['product_id']?.toString();
+                        if (productId == null || productId.isEmpty) continue;
+                        sold[productId] =
+                            (sold[productId] ?? 0) +
+                            _overviewNumber(data['quantity']);
+                      }
+
+                      var lowStockCount = 0;
+                      for (final product in activeProducts) {
+                        final data = product.data();
+                        final totalPurchased = purchased[product.id] ?? 0;
+                        final totalSold = sold[product.id] ?? 0;
+                        final stock = totalPurchased - totalSold;
+                        final percentage = _overviewNumber(
+                          data['reorder_percentage'] ?? 25,
+                        );
+                        final minimum = totalPurchased * percentage / 100;
+
+                        if (stock <= 0 || stock <= minimum) {
+                          lowStockCount++;
+                        }
+                      }
+
+                      salesValue = _formatOverviewMoney(salesTotal);
+                      expensesValue = _formatOverviewMoney(expensesTotal);
+                      productsValue = activeProducts.length.toString();
+                      lowStockValue = lowStockCount.toString();
+                    }
+
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SummaryCard(
+                                title: 'Sales',
+                                value: salesValue,
+                                icon: Icons.point_of_sale,
+                                color: const Color(0xFF147D55),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SummaryCard(
+                                title: 'Expenses',
+                                value: expensesValue,
+                                icon: Icons.receipt_long,
+                                color: const Color(0xFFD97706),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SummaryCard(
+                                title: 'Products',
+                                value: productsValue,
+                                icon: Icons.inventory_2_outlined,
+                                color: const Color(0xFF2563EB),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SummaryCard(
+                                title: 'Low stock',
+                                value: lowStockValue,
+                                icon: Icons.warning_amber_rounded,
+                                color: const Color(0xFFDC2626),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Text(
+                              'Some overview data could not be loaded. Check your '
+                              'internet connection and Firestore security rules.',
+                              style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  bool _overviewIsToday(dynamic value, DateTime today) {
+    DateTime? date;
+    if (value is Timestamp) {
+      date = value.toDate().toLocal();
+    } else if (value is DateTime) {
+      date = value.toLocal();
+    } else if (value is String) {
+      date = DateTime.tryParse(value)?.toLocal();
+    }
+
+    if (date == null) return false;
+    return date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day;
+  }
+
+  double _overviewNumber(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  String _formatOverviewMoney(double amount) {
+    return 'TSh ${amount.toStringAsFixed(2)}';
   }
 
   void _openScreen(BuildContext context, Widget screen) {
