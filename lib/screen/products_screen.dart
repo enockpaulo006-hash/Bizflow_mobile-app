@@ -218,6 +218,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ),
       );
     } finally {
+      // Let the dialog route finish its closing animation before disposing
+      // controllers still referenced by its TextFormFields.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       nameController.dispose();
       categoryController.dispose();
       unitController.dispose();
