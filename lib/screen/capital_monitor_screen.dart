@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -17,11 +19,33 @@ class _CapitalMonitorScreenState extends State<CapitalMonitorScreen> {
 
   String _selectedPeriod = 'This month';
   late Future<_CapitalData> _dataFuture;
+  Timer? _dayChangeTimer;
 
   @override
   void initState() {
     super.initState();
     _dataFuture = _loadData();
+    _scheduleNextDayRefresh();
+  }
+
+  void _scheduleNextDayRefresh() {
+    _dayChangeTimer?.cancel();
+    final now = DateTime.now();
+    final nextDay = DateTime(now.year, now.month, now.day + 1);
+    _dayChangeTimer = Timer(
+      nextDay.difference(now) + const Duration(seconds: 1),
+      () async {
+        if (!mounted) return;
+        await _refresh();
+        if (mounted) _scheduleNextDayRefresh();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _dayChangeTimer?.cancel();
+    super.dispose();
   }
 
   Future<_CapitalData> _loadData() async {
@@ -166,16 +190,57 @@ class _CapitalMonitorScreenState extends State<CapitalMonitorScreen> {
             return revenue - cost < 0;
           }).toList();
 
-          final totalRecordedLosses = losses.fold<double>(0, (total, doc) {
-            final record = doc.data();
-            final profit = record['profit'];
-            final loss = profit is num
-                ? -profit.toDouble()
-                : _number(record['cost_price']) -
-                    _number(record['revenue']);
+          // Stock-capital figures are all-time figures, not daily totals.
+          // The purchase screen stores one purchase record per product.
+          final totalStockInvestment = data.purchases.fold<double>(
+            0,
+            (total, doc) {
+              final record = doc.data();
+              final savedCost = record['total_cost'];
+              final cost = savedCost is num
+                  ? savedCost.toDouble()
+                  : _number(record['quantity']) *
+                      _number(record['buying_price']);
+              return total + cost;
+            },
+          );
 
-            return total + (loss > 0 ? loss : 0);
-          });
+          final soldQuantityByProduct = <String, double>{};
+          for (final saleDoc in data.sales) {
+            final record = saleDoc.data();
+            final productId = record['product_id']?.toString();
+            if (productId == null || productId.isEmpty) continue;
+            soldQuantityByProduct[productId] =
+                (soldQuantityByProduct[productId] ?? 0) +
+                    _number(record['quantity']);
+          }
+
+          final currentStockCapital = data.purchases.fold<double>(
+            0,
+            (total, purchaseDoc) {
+              final record = purchaseDoc.data();
+              final productId = record['product_id']?.toString() ?? '';
+              final purchasedQuantity = _number(record['quantity']);
+              final soldQuantity = soldQuantityByProduct[productId] ?? 0;
+              final remainingQuantity =
+                  (purchasedQuantity - soldQuantity)
+                      .clamp(0, double.infinity)
+                      .toDouble();
+              return total +
+                  remainingQuantity * _number(record['buying_price']);
+            },
+          );
+
+          // Sales records save cost_price as the cost of the quantity sold.
+          final capitalCostOfGoodsSold = data.sales.fold<double>(
+            0,
+            (total, doc) => total + _number(doc.data()['cost_price']),
+          );
+
+          final salesRevenue = data.sales.fold<double>(
+            0,
+            (total, doc) => total + _number(doc.data()['revenue']),
+          );
 
           final expenseTotal = expenses.fold<double>(0, (total, doc) {
             return total + _number(doc.data()['amount']);
@@ -219,13 +284,13 @@ class _CapitalMonitorScreenState extends State<CapitalMonitorScreen> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Current estimated capital',
+                      'Total stock investment recorded',
                       style: TextStyle(color: Colors.white70),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Not yet verified',
-                      style: TextStyle(
+                    Text(
+                      _money(totalStockInvestment),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
@@ -233,9 +298,9 @@ class _CapitalMonitorScreenState extends State<CapitalMonitorScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Purchases, sales and expenses are loaded, '
-                      'but opening cash, other assets and liabilities '
-                      'are not yet fully established.',
+                      'Calculated automatically from purchase records. '
+                      'This is stock purchase cost, not the full business '
+                      'cash balance or net worth.',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -269,7 +334,7 @@ class _CapitalMonitorScreenState extends State<CapitalMonitorScreen> {
               const SizedBox(height: 24),
 
               const Text(
-                'Financial overview',
+                'Stock capital overview',
                 style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
@@ -285,29 +350,29 @@ class _CapitalMonitorScreenState extends State<CapitalMonitorScreen> {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.35,
                 children: [
-                  const _CapitalMetric(
-                    title: 'Original investment',
-                    value: 'Not verified',
+                  _CapitalMetric(
+                    title: 'Total stock investment',
+                    value: _money(totalStockInvestment),
                     icon: Icons.savings_outlined,
-                    color: Color(0xFF2563EB),
+                    color: const Color(0xFF2563EB),
                   ),
-                  const _CapitalMetric(
-                    title: 'Additional capital',
-                    value: 'Not verified',
-                    icon: Icons.add_circle_outline,
+                  _CapitalMetric(
+                    title: 'Current stock capital',
+                    value: _money(currentStockCapital),
+                    icon: Icons.inventory_2_outlined,
                     color: green,
                   ),
                   _CapitalMetric(
-                    title: 'Recorded sales losses',
-                    value: _money(totalRecordedLosses),
-                    icon: Icons.trending_down,
-                    color: Colors.red,
+                    title: 'Cost of stock sold',
+                    value: _money(capitalCostOfGoodsSold),
+                    icon: Icons.shopping_cart_checkout_outlined,
+                    color: Colors.orange,
                   ),
                   _CapitalMetric(
-                    title: 'Expenses to review',
-                    value: '${expenses.length} records',
-                    icon: Icons.warning_amber_rounded,
-                    color: Colors.orange,
+                    title: 'Sales revenue recorded',
+                    value: _money(salesRevenue),
+                    icon: Icons.point_of_sale,
+                    color: const Color(0xFF7C3AED),
                   ),
                 ],
               ),
