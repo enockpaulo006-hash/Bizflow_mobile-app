@@ -329,8 +329,8 @@ class _BizFlowDashboardState extends State<BizFlowDashboard> {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Overview figures update automatically from your '
-                    'Firestore sales, expenses, and inventory records.',
+                    'GIDEONS MANAGEMENT SYSTEM '
+                    '.',
                   ),
                 ),
               ],
