@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -34,8 +33,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
         TextEditingController(text: data['category']?.toString() ?? 'Other');
     final unitController =
         TextEditingController(text: data['unit']?.toString() ?? 'piece');
-    final reorderController = TextEditingController(
-      text: (data['reorder_percentage'] ?? 25).toString(),
+
+    // Fixed quantity, not a percentage.
+    final minimumStockController = TextEditingController(
+      text: (data['minimum_stock'] ?? 5).toString(),
     );
 
     try {
@@ -91,22 +92,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: reorderController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      controller: minimumStockController,
+                      keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Low-stock threshold (%)',
-                        helperText: 'Enter a number from 1 to 100',
+                        labelText: 'Minimum stock quantity *',
+                        helperText:
+                            'Alert me when the available quantity reaches this number.',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        final percentage =
-                            double.tryParse(value?.trim() ?? '');
+                        final quantity =
+                            int.tryParse(value?.trim() ?? '');
 
-                        if (percentage == null ||
-                            percentage < 1 ||
-                            percentage > 100) {
-                          return 'Enter a percentage from 1 to 100';
+                        if (quantity == null || quantity < 1) {
+                          return 'Enter a whole number greater than 0';
                         }
                         return null;
                       },
@@ -133,11 +132,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     if (doc.id == product?.id) return false;
 
                     final existingData = doc.data();
-                    final existingName =
-                        (existingData['name'] ?? '')
-                            .toString()
-                            .trim()
-                            .toLowerCase();
+                    final existingName = (existingData['name'] ?? '')
+                        .toString()
+                        .trim()
+                        .toLowerCase();
 
                     return existingData['is_active'] != false &&
                         existingName == name.toLowerCase();
@@ -162,8 +160,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         ? 'Other'
                         : categoryController.text.trim(),
                     'unit': unitController.text.trim(),
-                    'reorder_percentage':
-                        double.parse(reorderController.text.trim()),
+
+                    // Save the fixed quantity in Firestore.
+                    'minimum_stock':
+                        int.parse(minimumStockController.text.trim()),
+
                     'is_active': true,
                     'updated_at': FieldValue.serverTimestamp(),
                   };
@@ -218,13 +219,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ),
       );
     } finally {
-      // Let the dialog route finish its closing animation before disposing
-      // controllers still referenced by its TextFormFields.
+      // Allow the dialog to finish closing before disposing its controllers.
       await Future<void>.delayed(const Duration(milliseconds: 300));
       nameController.dispose();
       categoryController.dispose();
       unitController.dispose();
-      reorderController.dispose();
+      minimumStockController.dispose();
     }
   }
 
@@ -424,7 +424,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       final category =
                           data['category']?.toString() ?? 'Other';
                       final unit = data['unit']?.toString() ?? 'piece';
-                      final percentage = data['reorder_percentage'] ?? 25;
+                      final minimumStock = data['minimum_stock'] ?? 5;
 
                       return Card(
                         color: Colors.white,
@@ -457,7 +457,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             padding: const EdgeInsets.only(top: 5),
                             child: Text(
                               '$category • Unit: $unit • '
-                              'Low-stock threshold: $percentage%',
+                              'Minimum stock: $minimumStock $unit',
                             ),
                           ),
                           trailing: PopupMenuButton<String>(
