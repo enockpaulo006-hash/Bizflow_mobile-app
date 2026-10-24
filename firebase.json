@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"bizflow-management","appId":"1:965984644458:android:3766e1edd2bf60323d8913","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"bizflow-management","configurations":{"android":"1:965984644458:android:3766e1edd2bf60323d8913","ios":"1:965984644458:ios:8ab89b5147cc5f083d8913","macos":"1:965984644458:ios:8ab89b5147cc5f083d8913","web":"1:965984644458:web:8cc53c7dbec3e8993d8913","windows":"1:965984644458:web:c0b89ea6a4dc0d493d8913"}}}}}}
+﻿{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "bizflow-management",
+          "appId": "1:965984644458:android:3766e1edd2bf60323d8913",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "bizflow-management",
+          "configurations": {
+            "android": "1:965984644458:android:3766e1edd2bf60323d8913",
+            "ios": "1:965984644458:ios:8ab89b5147cc5f083d8913",
+            "macos": "1:965984644458:ios:8ab89b5147cc5f083d8913",
+            "web": "1:965984644458:web:8cc53c7dbec3e8993d8913",
+            "windows": "1:965984644458:web:c0b89ea6a4dc0d493d8913"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
